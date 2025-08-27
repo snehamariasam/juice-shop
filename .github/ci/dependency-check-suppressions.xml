@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.2.xsd">
+
+    <!-- Example: Suppress a specific CVE -->
     <suppress>
-        <filePath regex="true">.*node_modules/some-lib.*</filePath>
+        <cve>CVE-2021-1234</cve>
+        <notes>Suppressing false positive for CVE-2021-1234</notes>
     </suppress>
+
+    <!-- Example: Suppress by CPE -->
+    <suppress>
+        <cpe>cpe:/a:example:example:1.0</cpe>
+        <notes>Suppressing false positive for example package</notes>
+    </suppress>
+
+    <!-- Example: Suppress by CWE -->
+    <suppress>
+        <cwe>CWE-79</cwe>
+        <notes>Suppressing cross-site scripting false positive</notes>
+    </suppress>
+
+    <!-- Example: Suppress vulnerabilities below a certain CVSS score -->
+    <suppress>
+        <cvssBelow>5.0</cvssBelow>
+        <notes>Suppress low severity vulnerabilities</notes>
+    </suppress>
+
 </suppressions>
