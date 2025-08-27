@@ -1,4 +1,4 @@
-name: Security Scans
+name: Security Pipeline
 
 on:
   push:
@@ -7,44 +7,68 @@ on:
     branches: [ "master" ]
 
 jobs:
-  semgrep-sast:
-    name: Semgrep SAST Scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Run Semgrep Scan
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: "p/ci"
-          generateSarif: "1"
-          auditOn: push
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-
-      - name: Upload SARIF results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: semgrep.sarif
-
   dependency-check:
-    name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Run OWASP Dependency-Check
+      - name: Run Dependency-Check (SCA)
         uses: dependency-check/Dependency-Check_Action@main
         with:
-          project: "JuiceShop"
+          project: "Juice Shop"
           path: "."
           format: "HTML"
           out: "reports"
 
-      - name: Upload dependency-check report
-        uses: actions/upload-artifact@v3
+      - name: Upload Dependency Report
+        uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
           path: reports
+
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Semgrep SAST Scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/ci
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Autobuild
+        run: npm install
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+# Optional E2E/Cypress job (commented out by default)
+# Uncomment if you want to run tests manually
+#  cypress-tests:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: actions/setup-node@v4
+#        with:
+#          node-version: 20
+#      - run: npm ci
+#      - run: npm install --save-dev @types/node @types/cypress @types/config
+#      - run: npx cypress verify
+#      - run: npm run test
