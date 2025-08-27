@@ -2,73 +2,181 @@ name: Security Pipeline
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main", "master" ]
+  schedule:
+    - cron: '0 0 * * 0' # Weekly scans on Sunday at midnight
+
+env:
+  JAVA_HOME: /opt/jdk  # Required for Dependency Check compatibility :cite[3]
 
 jobs:
+  # Dependency Scanning (SCA) with OWASP Dependency-Check
   dependency-check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Run Dependency-Check (SCA)
-        uses: dependency-check/Dependency-Check_Action@main
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          project: "Juice Shop"
+          fetch-depth: 0  # Get full history for better analysis
+          
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          
+      - name: Generate package-lock.json
+        run: npm install --package-lock-only
+        # Run for each package.json if multiple exist in subdirectories
+        
+      - name: Run OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@v4.0.0  # Use specific version
+        env:
+          JAVA_HOME: /opt/jdk  # Reset JAVA_HOME for compatibility :cite[3]
+        with:
+          project: "Your-Project-Name"
           path: "."
           format: "HTML"
           out: "reports"
-
-      - name: Upload Dependency Report
+          args: >-
+            --failOnCVSS 7
+            --enableRetired
+            --exclude "**/passwordProtected.zip"
+            --exclude "**/videoExploit.zip"
+            --exclude "**/arbitraryFileWrite.zip"
+            --disableNodeAudit  # Optional if node_modules doesn't exist
+            
+      - name: Upload Dependency Check report
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
           path: reports
 
+  # SAST Scanning with Semgrep
   semgrep:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Run Semgrep SAST Scan
-        uses: returntocorp/semgrep-action@v1
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          config: p/ci
+          fetch-depth: 0
+          
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Run Semgrep SAST scan
+        run: |
+          pip install semgrep
+          semgrep --config=p/ci --config=p/security-audit \
+                  --exclude="frontend/src/assets/private/**" \
+                  --json --verbose > semgrep-results.json
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+          
+      - name: Upload Semgrep results
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-results
+          path: semgrep-results.json
 
+  # CodeQL Analysis for advanced static analysis
   codeql:
     runs-on: ubuntu-latest
     permissions:
       security-events: write
       actions: read
       contents: read
-
+      
     steps:
-      - uses: actions/checkout@v4
-
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: javascript
-
+          languages: 'javascript'
+          queries: security-extended
+          
       - name: Autobuild
         run: npm install
-
+          
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript"
 
-# Optional E2E/Cypress job (commented out by default)
-# Uncomment if you want to run tests manually
-#  cypress-tests:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: actions/setup-node@v4
-#        with:
-#          node-version: 20
-#      - run: npm ci
-#      - run: npm install --save-dev @types/node @types/cypress @types/config
-#      - run: npx cypress verify
-#      - run: npm run test
+  # Dependency Review for pull requests
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: "high"
+          deny-licenses: "GPL-3.0, AGPL-3.0"
+          fail-on-scopes: "development, runtime"
+          comment-summary-in-pr: true
+
+  # Container Scanning (if you have Docker images)
+  container-scanning:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Build Docker image
+        run: docker build -t your-image:latest .
+        
+      - name: Scan container image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'your-image:latest'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'HIGH,CRITICAL'
+          
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Secret scanning (detect accidentally committed secrets)
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Detect secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          args: '--only-verified --regex --json .'
+        continue-on-error: true  # Don't fail pipeline for secrets detection
