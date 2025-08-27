@@ -144,16 +144,3 @@ jobs:
         env:
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
 
-  coverage-report:
-    runs-on: ubuntu-latest
-    needs: [server-tests, api-tests, e2e-tests]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Upload coverage
-        uses: coverallsapp/github-action@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          files: |
-            build/reports/coverage/frontend-tests/lcov.info
-            build/reports/coverage/server-tests/lcov.info
-            build/reports/coverage/api-tests/lcov.info
