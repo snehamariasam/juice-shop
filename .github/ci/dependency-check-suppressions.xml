@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.2.xsd">
-    <filePath>test/files/arbitraryFileWrite.zip</filePath>
-    <filePath>test/files/passwordProtected.zip</filePath>
-    <filePath>test/files/videoExploit.zip</filePath>
+    <suppress>
+        <filePath regex="true">.*node_modules/some-lib.*</filePath>
+    </suppress>
 </suppressions>

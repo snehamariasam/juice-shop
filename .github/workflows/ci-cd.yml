@@ -90,4 +90,4 @@ jobs:
           path: "./"
           format: "HTML"
           out: "./reports"
-          args: "--noupdate --suppression .github/ci/dependency-check-suppressions.xml"
+          args: "--noupdate --disableArchive --log odc.log --suppression .github/ci/dependency-check-suppressions.xml"
