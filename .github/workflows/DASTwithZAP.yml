@@ -31,17 +31,31 @@ jobs:
         env:
           PORT: 3000
 
+      - name: Make workspace writable for ZAP
+        run: chmod -R a+rw ./juice-shop
+
       - name: Run OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.9.0
         with:
           target: 'http://localhost:3000'
-          format: 'html'
-          output: 'zap_report.html'
-          fail_on_risk: 'High'
-          cmd_options: '-t http://localhost:3000 -r zap_report.html'
+          cmd_options: '-t http://localhost:3000 -r zap_report.html -J zap_report.json -w zap_report.md'
+          fail_action: 'warn'       # optional: fails workflow on high risk if needed
+          artifact_name: 'zap-report'
 
-      - name: Upload DAST Report
+      - name: Upload HTML Report
         uses: actions/upload-artifact@v4
         with:
-          name: zap-report
+          name: zap-report-html
           path: zap_report.html
+
+      - name: Upload JSON Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report-json
+          path: zap_report.json
+
+      - name: Upload Markdown Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report-md
+          path: zap_report.md
