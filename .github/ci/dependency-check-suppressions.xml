@@ -3,34 +3,34 @@
 
     <!-- Example: suppress CVE by its ID -->
     <suppress>
-        <cve>CVE-2023-12345</cve>
         <notes>
             Suppressing CVE-2023-12345 because this dependency is not used at runtime.
         </notes>
+        <cve>CVE-2023-12345</cve>
     </suppress>
 
     <!-- Example: suppress by CWE (must be integer, not CWE-79) -->
     <suppress>
-        <cwe>79</cwe>
         <notes>
             Suppressing all reflected XSS findings (CWE-79) because they are false positives in test libraries.
         </notes>
+        <cwe>79</cwe>
     </suppress>
 
     <!-- Example: suppress by package URL (purl) -->
     <suppress>
-        <packageUrl regex="true">^pkg:npm/ansi-regex@.*</packageUrl>
         <notes>
             ansi-regex false positives due to nested dependency in development-only tooling.
         </notes>
+        <packageUrl regex="true">^pkg:npm/ansi-regex@.*</packageUrl>
     </suppress>
 
     <!-- Example: suppress by dependency name -->
     <suppress>
-        <dependencyName regex="true">.*string-width.*</dependencyName>
         <notes>
             Suppressing string-width false positive alias (string-width-cjs).
         </notes>
+        <dependencyName regex="true">.*string-width.*</dependencyName>
     </suppress>
 
 </suppressions>
