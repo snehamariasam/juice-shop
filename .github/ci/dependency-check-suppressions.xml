@@ -1,24 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.2.xsd">
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
 
-    <!-- Suppress a specific CVE (false positive for CVE-2021-1234) -->
+    <!-- Example: suppress CVE by its ID -->
     <suppress>
-        <cve>CVE-2021-1234</cve>
+        <cve>CVE-2023-12345</cve>
+        <notes>
+            Suppressing CVE-2023-12345 because this dependency is not used at runtime.
+        </notes>
     </suppress>
 
-    <!-- Suppress by CPE (false positive for example package) -->
+    <!-- Example: suppress by CWE (must be integer, not CWE-79) -->
     <suppress>
-        <cpe>cpe:/a:example:example:1.0</cpe>
+        <cwe>79</cwe>
+        <notes>
+            Suppressing all reflected XSS findings (CWE-79) because they are false positives in test libraries.
+        </notes>
     </suppress>
 
-    <!-- Suppress by CWE (cross-site scripting false positive) -->
+    <!-- Example: suppress by package URL (purl) -->
     <suppress>
-        <cwe>CWE-79</cwe>
+        <packageUrl regex="true">^pkg:npm/ansi-regex@.*</packageUrl>
+        <notes>
+            ansi-regex false positives due to nested dependency in development-only tooling.
+        </notes>
     </suppress>
 
-    <!-- Suppress vulnerabilities below a certain CVSS score (low severity vulnerabilities) -->
+    <!-- Example: suppress by dependency name -->
     <suppress>
-        <cvssBelow>5.0</cvssBelow>
+        <dependencyName regex="true">.*string-width.*</dependencyName>
+        <notes>
+            Suppressing string-width false positive alias (string-width-cjs).
+        </notes>
     </suppress>
 
 </suppressions>
