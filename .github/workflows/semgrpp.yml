@@ -6,9 +6,7 @@ on:
   workflow_dispatch: {}
   push:
     branches: ["master", "main"]
-  schedule:
-    - cron: '20 17 * * *' # Sets Semgrep to scan every day at 17:20 UTC.
-
+  
 jobs:
   semgrep:
     name: semgrep/ci 
