@@ -1,24 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
 
-    <!-- Suppressing CVE-2023-12345 because this dependency is not used at runtime -->
+    <!-- Suppress by CVE -->
     <suppress>
+        <notes>Suppressing CVE-2023-12345 because this dependency is not used at runtime.</notes>
         <cve>CVE-2023-12345</cve>
     </suppress>
 
-    <!-- Suppressing all reflected XSS findings (CWE-79) because they are false positives in test libraries -->
+    <!-- Suppress by CWE -->
     <suppress>
+        <notes>Suppressing false positive for reflected XSS in test libraries.</notes>
         <cwe>79</cwe>
     </suppress>
 
-    <!-- ansi-regex false positives due to nested dependency in development-only tooling -->
+    <!-- Suppress by package URL -->
     <suppress>
+        <notes>Suppressing false positive for ansi-regex due to nested dev dependency.</notes>
         <packageUrl regex="true">^pkg:npm/ansi-regex@.*</packageUrl>
+        <cve>CVE-2021-3807</cve>
     </suppress>
 
-    <!-- Suppressing string-width false positive alias (string-width-cjs) -->
+    <!-- CORRECTED: Use filePath instead of dependencyName -->
     <suppress>
-        <dependencyName regex="true">.*string-width.*</dependencyName>
+        <notes>Suppressing string-width false positive alias (string-width-cjs).</notes>
+        <filePath regex="true">.*string-width.*\.jar</filePath>
+        <cve>CVE-2021-3807</cve>
     </suppress>
 
 </suppressions>
