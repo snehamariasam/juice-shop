@@ -13,17 +13,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Setup Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
+      # 3. Install dependencies
       - name: Install dependencies
         run: npm ci
 
+      # 4. Start Juice Shop server in background
       - name: Start Juice Shop server
         run: |
           npm start &
@@ -31,21 +35,35 @@ jobs:
         env:
           PORT: 3000
 
-      - name: Make workspace writable for Arachni
+      # 5. Make workspace writable for Arachni
+      - name: Make workspace writable
         run: chmod -R a+rw .
+
+      # 6. Determine runner Docker bridge IP
+      - name: Get Docker bridge IP
+        id: docker_ip
+        run: |
+          IP=$(ip addr show docker0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
+          echo "DOCKER_BRIDGE_IP=$IP" >> $GITHUB_ENV
+
+      # 7. Run Arachni DAST scan
       - name: Run Arachni DAST Scan
         run: |
           docker run --rm \
-            --network="host" \
             -v $(pwd):/home/arachni \
+            -w /home/arachni \
             arachni/arachni \
-            /usr/local/arachni/bin/arachni http://host.docker.internal:3000 \
+            /usr/local/arachni/bin/arachni http://$DOCKER_BRIDGE_IP:3000 \
             --report-save-path=/home/arachni/arachni_report.afr \
             --report=json:outfile=/home/arachni/arachni_report.json \
             --report=html:outfile=/home/arachni/arachni_report.html
-     
-      - name: Upload Arachni Report
+
+      # 8. Upload reports as artifacts
+      - name: Upload Arachni Reports
         uses: actions/upload-artifact@v4
         with:
-          name: arachni-report
-          path: arachni_report.afr
+          name: arachni-reports
+          path: |
+            arachni_report.afr
+            arachni_report.json
+            arachni_report.html
