@@ -40,7 +40,7 @@ jobs:
           -v $(pwd):/home/arachni \
           -w /home/arachni \
            arachni/arachni \
-           arachni http://localhost:3000 \
+           arachni_cli http://localhost:3000 \
            --output-only-afr \
            --report-save-path=/home/arachni/arachni_report.afr
            
