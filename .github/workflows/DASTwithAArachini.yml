@@ -54,7 +54,8 @@ jobs:
             -w /home/arachni \
             arachni/arachni \
             /usr/local/arachni/bin/arachni http://$DOCKER_BRIDGE_IP:3000 \
-            --report-save-path=/home/arachni/arachni_report.afr                        
+            --report-save-path=/home/arachni/arachni_report.afr \
+            arachni_reporter /home/arachni/arachni_report.afr --reporter=html:outfile=arachni_report.html.zip
             
       # 8. Upload reports as artifacts
       - name: Upload Arachni Reports
@@ -64,4 +65,4 @@ jobs:
           path: |
             arachni_report.afr
             arachni_report.json
-            arachni_report.html
+            arachni_report.html.zip
