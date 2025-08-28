@@ -1,12 +1,10 @@
 name: Juice Shop CI/CD
-
 on:
+  pull_request: {}
+  workflow_dispatch: {}
   push:
-    branches:
-      - main
-      - master
-  pull_request:
-
+    branches: ["master", "main"]
+ 
 jobs:
   install-dependencies:
     runs-on: ubuntu-latest
