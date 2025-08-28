@@ -1,0 +1,109 @@
+name: Juice Shop SonarQube CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  install-dependencies:
+    runs-on: ubuntu-latest
+    outputs:
+      node_modules_path: ${{ steps.install.outputs.node_modules_path }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Node.js dependencies
+        id: install
+        run: |
+          npm ci
+          echo "node_modules_path=$(pwd)/node_modules" >> $GITHUB_OUTPUT
+
+  server-tests:
+    runs-on: ubuntu-latest
+    needs: install-dependencies
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm ci
+      - name: Run server tests with nyc
+        run: npm run test:server
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: install-dependencies
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm ci
+      - name: Run frontend E2E tests (Cypress)
+        uses: cypress-io/github-action@v6
+        with:
+          start: npm start
+          wait-on: http://localhost:3000
+          wait-on-timeout: 60
+          browser: chrome
+          record: false
+        env:
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    needs: install-dependencies
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm ci
+      - name: Run OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "Juice Shop"
+          path: "./"
+          format: "XML"        # XML format for SonarQube import
+          out: "./reports"
+          args: "--noupdate --disableArchive --log odc.log --suppression .github/ci/dependency-check-suppressions.xml"
+
+  sonar-scan:
+    runs-on: ubuntu-latest
+    needs:
+      - install-dependencies
+      - dependency-check
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Install Node.js dependencies
+        run: npm ci
+      - name: SonarQube Scan
+        uses: sonarsource/sonarcloud-github-action@v2
+        with:
+          projectBaseDir: .
+          sonarHostUrl: http://localhost:9000
+          sonarToken: ${{ secrets.SONAR_TOKEN }}
+          extraProperties: |
+            sonar.javascript.lcov.reportPaths=coverage/lcov.info
+            sonar.dependencyCheck.reportPath=reports/dependency-check-report.xml
