@@ -33,17 +33,16 @@ jobs:
 
       - name: Make workspace writable for Arachni
         run: chmod -R a+rw .
-
+      
       - name: Run Arachni DAST Scan
         run: |
           docker run --rm \
-          -v $(pwd):/home/arachni \
-          -w /home/arachni \
-           arachni/arachni \
-           arachni_cli http://localhost:3000 \
-           --output-only-afr \
-           --report-save-path=/home/arachni/arachni_report.afr
-           
+            -v $(pwd):/usr/local/arachni \
+            -w /usr/local/arachni \
+            arachni/arachni \
+            bin/arachni http://localhost:3000 \
+            --output-only-afr \
+            --report-save-path=/usr/local/arachni/arachni_report.afr  
       - name: Upload Arachni Report
         uses: actions/upload-artifact@v4
         with:
