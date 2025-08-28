@@ -35,3 +35,9 @@ jobs:
         with:
           sarif_file: semgrep.sarif
         if: always()
+      - name: Upload SARIF as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-results
+          path: semgrep.sarif
+        if: always()
