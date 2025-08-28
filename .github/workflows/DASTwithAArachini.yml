@@ -1,0 +1,50 @@
+name: DAST Scan - Arachni
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+  workflow_dispatch:
+
+jobs:
+  dast:
+    name: Arachni DAST Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start Juice Shop server
+        run: |
+          npm start &
+          sleep 15
+        env:
+          PORT: 3000
+
+      - name: Make workspace writable for Arachni
+        run: chmod -R a+rw .
+
+      - name: Run Arachni DAST Scan
+        run: |
+          docker run --rm \
+            -v $(pwd):/home/arachni \
+            -w /home/arachni \
+            arachni/arachni \
+            --url http://localhost:3000 \
+            --output-afr /home/arachni/arachni_report.afr
+
+      - name: Upload Arachni Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: arachni-report
+          path: arachni_report.afr
