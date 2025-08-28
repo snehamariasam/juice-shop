@@ -37,12 +37,13 @@ jobs:
       - name: Run Arachni DAST Scan
         run: |
           docker run --rm \
-            -v $(pwd):/home/arachni \
-            -w /home/arachni \
-            arachni/arachni \
-            --url http://localhost:3000 \
-            --output-afr /home/arachni/arachni_report.afr
-
+          -v $(pwd):/home/arachni \
+          -w /home/arachni \
+           arachni/arachni \
+           arachni http://localhost:3000 \
+           --output-only-afr \
+           --report-save-path=/home/arachni/arachni_report.afr
+           
       - name: Upload Arachni Report
         uses: actions/upload-artifact@v4
         with:
