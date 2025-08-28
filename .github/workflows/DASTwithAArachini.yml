@@ -39,7 +39,7 @@ jobs:
             --network="host" \
             -v $(pwd):/home/arachni \
             arachni/arachni \
-            /usr/local/arachni/bin/arachni http://127.0.0.1:3000 \
+            /usr/local/arachni/bin/arachni http://host.docker.internal:3000 \
             --report-save-path=/home/arachni/arachni_report.afr \
             --report=json:outfile=/home/arachni/arachni_report.json \
             --report=html:outfile=/home/arachni/arachni_report.html
