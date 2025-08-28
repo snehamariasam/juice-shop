@@ -68,7 +68,7 @@ jobs:
       - name: Install Semgrep
         run: pip install semgrep
       - name: Run Semgrep and push results to dashboard
-        run: semgrep ci --sarif --sarif-output=semgrep.sarif
+        run: semgrep ci --config p/nodejs
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
